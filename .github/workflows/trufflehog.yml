@@ -22,9 +22,8 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: TruffleHog OSS
-        uses: trufflesecurity/trufflehog@v3.41.1
-
+      - name: Install TruffleHog
+        run: pip install trufflehog
 
       - name: Run TruffleHog scan
         if: ${{ always() }}
@@ -50,4 +49,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: TruffleHog Findings
-          path: ${{ env.ARTIFACTS_DIR }}/home/runner/work/cairo/cairo/findings
+          path: ${{ env.ARTIFACTS_DIR }}
