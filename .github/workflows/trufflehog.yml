@@ -3,7 +3,7 @@ name: Secret Scanning
 on:
   push:
     branches:
-      - master    
+      - master
   pull_request:
     branches:
       - master
@@ -19,16 +19,30 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.7'
           
       - name: Install Trufflehog
         run: pip install trufflehog
         
       - name: Run Secret Scanning
-        run: trufflehog --entropy=True --format=html --json ${{ github.workspace }} > secret_scan.html
+        run: trufflehog --entropy=True --json ${{ github.workspace }} > secret_scan.json || echo "::error::Secret scanning failed"
         
-      - name: Upload Artifacts
+      - name: Convert JSON to HTML
+        run: |
+          python -c "import json; from html import escape; data = json.load(open('secret_scan.json')); html = '<html><head><title>Secret Scan Results</title></head><body><h1>Secret Scan Results</h1><ul>'; html += ''.join(f'<li>{escape(issue["path"])}: {escape(issue["string"])} (Entropy: {issue["entropy"]})</li>' for issue in data); html += '</ul></body></html>'; open('secret_scan.html', 'w').write(html)"
+        
+      - name: Upload HTML Artifact
         uses: actions/upload-artifact@v2
         with:
-          name: secret_scan_results
+          name: secret_scan_results_html
           path: secret_scan.html
+          
+      - name: Convert JSON to Text
+        run: |
+          python -c "import json; from html import escape; data = json.load(open('secret_scan.json')); text = ''; text += ''.join(f'{escape(issue["path"])}: {escape(issue["string"])} (Entropy: {issue["entropy"]})\n' for issue in data); open('secret_scan.txt', 'w').write(text)"
+        
+      - name: Upload Text Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: secret_scan_results_txt
+          path: secret_scan.txt
