@@ -1,53 +1,45 @@
-name: Secret Scanning
-
+name: Secret Scanning Workflow
 on:
   push:
     branches:
       - master
-  pull_request:
-    branches:
-      - master
 
 jobs:
-  secret_scan:
-    runs-on: ubuntu-22.04
-    
+  scan-secrets:
+    runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
-        
-      - name: Set up Python 3.8
+
+      - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
-          
-      - name: Install Trufflehog
-        run: pip install trufflehog
-        
-      - name: Run Secret Scanning
-        run: trufflehog --entropy=True --json "${{ github.workspace }}" > secret_scan.json || echo "::error::Secret scanning failed"
-        
-      - name: Convert JSON to HTML
+          python-version: '3.x'
+
+      - name: Install Trufflehog and JQ
         run: |
-          python -c "import json; from html import escape; data = json.load(open('secret_scan.json')); html = '<html><head><title>Secret Scan Results</title></head><body><h1>Secret Scan Results</h1><ul>'; html += ''.join(f'<li>{escape(issue['path'])}: {escape(issue['string'])} (Entropy: {issue['entropy']})</li>' for issue in data); html += '</ul></body></html>'; open('secret_scan.html', 'w').write(html)"
-        
-      - name: Upload HTML Artifact
+          pip install trufflehog
+          sudo apt-get install jq -y
+
+      - name: Run Trufflehog and save result to file
+        run: |
+          trufflehog https://github.com/vunetsystems/cairo.git --json | jq '.' > result.txt
+
+      - name: Upload result.txt to artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: secret_scan_results_html
-          path: secret_scan.html
-          
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.10'
-          
-      - name: Convert JSON to Text
-        run: |
-          python -c "import json; from html import escape; data = json.load(open('secret_scan.json')); text = ''; text += ''.join(f'{escape(issue['path'])}: {escape(issue['string'])} (Entropy: {issue['entropy']})\n' for issue in data); open('secret_scan.txt', 'w').write(text)"
-        
-      - name: Upload Text Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: secret_scan_results_txt
-          path: secret_scan.txt 
+          name: Secret Scan Result
+          path: result.txt
+
+
+
+
+
+
+
+
+
+
+
+> trufflehog https://github.com/vunetsystems/cairo.git --json | jq '.' > result.txt  
