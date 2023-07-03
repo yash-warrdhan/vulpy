@@ -23,8 +23,8 @@ jobs:
 
       - name: Perform Trufflehog scan
         run: |
-          cd ${{ github.workspace }}
-          trufflehog --regex --entropy=True --json > output.json
+          cd /home/runner/work/vulpy/vulpy
+          trufflehog --json --regrex /home/runner/work/vulpy/vulpy > output.json
 
       - name: Convert output to text format
         run: |
