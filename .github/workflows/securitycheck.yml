@@ -1,9 +1,12 @@
 name: AI Security Check for Pull Requests
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     branches:
-      - main
+      - master
 
 jobs:
   ai_security_check_for_pull_requests:
