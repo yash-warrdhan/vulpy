@@ -61,7 +61,7 @@ jobs:
         ignore_failure: true
 
     - name: Check for security risks
-        run:|
+      run:  |
           if grep -q "HIGH" output/security_report.txt; then
             echo "Security risks found, blocking PR"
             exit 1
