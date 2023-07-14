@@ -20,8 +20,8 @@ jobs:
         run: pip install trufflehog
 
       - name: Verify TruffleHog Installation
-        run: trufflehog --version
+        run: trufflehog -h
 
       - name: Run TruffleHog Scan
-        run: trufflehog --entropy=True --json ${{ github.workspace }}
+        run: trufflehog  ${{ github.workspace }}
 
