@@ -1,0 +1,58 @@
+name: Secret Scan
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  security_scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install TruffleHog and Dependencies
+        run: |
+          sudo apt-get install -y python3 python3-pip
+          pip install trufflehog
+
+      - name: Run TruffleHog Scan
+        run: |
+          trufflehog --entropy=True --json ${{ github.workspace }} > trufflehog_report.json
+
+      - name: Display TruffleHog Secrets
+        run: |
+          if [ -s trufflehog_report.json ]; then
+            echo "TruffleHog Secrets found:"
+            cat trufflehog_report.json
+          else
+            echo "No TruffleHog secrets found."
+          fi
+
+      - name: Install Detect Secrets
+        run: |
+          pip install detect-secrets
+
+      - name: Run Detect Secrets Scan
+        run: |
+          detect-secrets scan --exclude .secrets --json ${{ github.workspace }} > detect_secrets_report.json
+
+      - name: Display Detect Secrets
+        run: |
+          if [ -s detect_secrets_report.json ]; then
+            echo "Detect Secrets found:"
+            cat detect_secrets_report.json
+          else
+            echo "No Detect Secrets found."
+          fi
+
+      - name: Upload Reports
+        uses: actions/upload-artifact@v2
+        with:
+          name: secret-reports
+          path: |
+            trufflehog_report.json
+            detect_secrets_report.json
