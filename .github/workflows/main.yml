@@ -11,17 +11,39 @@ jobs:
     name: Security Scan
     runs-on: ubuntu-latest
     steps:
-      - name: Import Ubuntu
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Install TruffleHog
-        run: pip install trufflehog
+      - name: Install TruffleHog and Dependencies
+        run: |
+          sudo apt-get install -y python3 python3-pip
+          pip install trufflehog
 
       - name: Verify TruffleHog Installation
-        run: trufflehog -h
+        run: trufflehog --version
+
+      - name: Debug Information
+        run: |
+          echo "Current Working Directory:"
+          pwd
+
+          echo "Contents of Repository Directory:"
+          ls -al
+
+          echo "Contents of Target Directory:"
+          ls -al ${{ github.workspace }}
+
+      - name: Check out Repository
+        run: git clone https://github.com/${{ github.repository }} ${{ github.workspace }}
 
       - name: Run TruffleHog Scan
-        run: trufflehog  ${{ github.workspace }}
+        run: trufflehog --entropy=True --json ${{ github.workspace }}
 
+      - name: Display TruffleHog Secrets
+        run: |
+          if [ -s trufflehog_report.json ]; then
+            echo "TruffleHog Secrets found:"
+            cat trufflehog_report.json
+          else
+            echo "No TruffleHog secrets found."
+          fi
